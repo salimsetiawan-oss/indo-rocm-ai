@@ -1,0 +1,34 @@
+# LoRA Configuration for Indonesian LLM Fine-Tuning
+# Target: Llama 3 8B / Mistral 7B on AMD Instinct (ROCm)
+
+model:
+  name: "meta-llama/Meta-Llama-3-8B"  # or "mistralai/Mistral-7B-v0.3"
+  torch_dtype: "bfloat16"
+  attn_implementation: "eager"  # "flash_attention_2" if ROCm flash-attn available
+  device_map: "auto"
+
+lora:
+  r: 32                          # LoRA rank (test: 16, 32, 64)
+  lora_alpha: 64                 # Scaling factor (usually 2x rank)
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules:                # Modules to apply LoRA
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+quantization:
+  enabled: true                  # Enable QLoRA for memory savings
+  bits: 4                        # 4-bit quantization
+  quant_type: "nf4"             # NormalFloat4
+  double_quant: true             # Nested quantization
+  compute_dtype: "bfloat16"     # Compute in bf16
+
+# Alternative: Full LoRA (no quantization) if VRAM allows
+# quantization:
+#   enabled: false
