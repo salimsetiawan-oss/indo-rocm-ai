@@ -2,28 +2,24 @@
 
 > Fine-tuning Indonesian Language Models + Document Vision Pipeline on AMD Instinct GPUs
 
-## 📋 Overview
+## Overview
 
-**IndoROC** is a research and development project that leverages AMD Developer Cloud (Instinct MI250/MI300) to:
+**IndoROC** is an open-source project exploring AMD Instinct GPUs (MI250/MI300) for underrepresented language AI — specifically Indonesian (Bahasa Indonesia).
 
-1. **Fine-tune open-source LLMs** for Indonesian language tasks using ROCm + PyTorch
-2. **Build a multi-modal document pipeline** for Indonesian documents (KTP, faktur, invoices, etc.)
+Two tracks:
+1. **Indonesian LLM Fine-Tuning** — LoRA/QLoRA on Llama 3 / Mistral for Indonesian NLP tasks
+2. **Document Vision Pipeline** — Multi-modal extraction for KTP, faktur pajak, and receipts
 
-This project aims to demonstrate that AMD Instinct GPUs are viable for non-English NLP and vision-language tasks, while contributing to the underrepresented Indonesian AI ecosystem.
+The goal is simple: prove ROCm works for non-English NLP, publish benchmarks, and give the Indonesian AI community real tools.
 
-## 🎯 Objectives
+## Why This Matters
 
-### Track 1: Indonesian LLM Fine-Tuning
-- Fine-tune Llama 3 / Mistral / DeepSeek on Indonesian datasets using LoRA/QLoRA
-- Benchmark training throughput and inference speed on ROCm vs. published CUDA results
-- Release fine-tuned models + training scripts to Hugging Face Hub
+- Indonesian is spoken by 270M+ people but massively underrepresented in LLM research
+- AMD ROCm ecosystem lacks real-world NLP benchmarks outside English
+- Document understanding for Indonesian bureaucracy (KTP, NPWP, faktur) is a genuine pain point
+- Most GPU compute assumes CUDA — we need to validate alternatives
 
-### Track 2: Multi-Modal Document Understanding
-- Build an image-to-text pipeline for Indonesian documents (KTP, faktur pajak, receipts)
-- Combine vision models (CLIP, Florence-2) with LLM for structured extraction
-- Deploy as a working demo with API endpoint
-
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -41,7 +37,7 @@ This project aims to demonstrate that AMD Instinct GPUs are viable for non-Engli
 │  │      ▼      │     │       │                │   │
 │  │  LoRA/QLoRA │     │       ▼                │   │
 │  │      │      │     │  Structured Output     │   │
-│  │      ▼      │     │  (JSON/Markdown)       │   │
+│  │      ▼      │     │  (JSON)                │   │
 │  │  HF Hub     │     │                        │   │
 │  └─────────────┘     └──────────────────────┘   │
 │                                                   │
@@ -50,7 +46,7 @@ This project aims to demonstrate that AMD Instinct GPUs are viable for non-Engli
 └─────────────────────────────────────────────────┘
 ```
 
-## 📊 Benchmark Targets
+## Benchmark Targets
 
 | Metric | Target | Hardware |
 |--------|--------|----------|
@@ -60,79 +56,58 @@ This project aims to demonstrate that AMD Instinct GPUs are viable for non-Engli
 | KTP extraction accuracy | > 90% field-level | MI250 |
 | Document OCR latency | < 2 sec/image | MI250 |
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **GPU:** AMD Instinct MI250 / MI300X (via AMD Developer Cloud)
+- **GPU:** AMD Instinct MI250 / MI300X
 - **Framework:** ROCm 6.x, PyTorch 2.x, Hugging Face Transformers
-- **Training:** LoRA via PEFT, QLoRA via bitsandbytes (ROCm fork)
+- **Training:** LoRA via PEFT, QLoRA via bitsandbytes (ROCm)
 - **Inference:** vLLM (ROCm build), llama.cpp (ROCm backend)
 - **Vision:** CLIP, Florence-2, PaddleOCR
 - **Languages:** Python 3.10+
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 indo-rocm-ai/
-├── README.md                   # This file
-├── PLAN.md                     # Detailed milestones & deliverables
-├── configs/                    # Training & model configs
+├── README.md
+├── PLAN.md
+├── configs/
 │   ├── lora_config.yaml
-│   ├── training_args.yaml
-│   └── vision_pipeline.yaml
+│   └── training_args.yaml
 ├── src/
-│   ├── indo-llm/              # Track 1: LLM fine-tuning
-│   │   ├── train.py
-│   │   ├── evaluate.py
-│   │   ├── prepare_data.py
-│   │   └── merge_adapter.py
-│   └── vision-pipeline/       # Track 2: Document understanding
-│       ├── extract.py
-│       ├── preprocess.py
-│       ├── pipeline.py
-│       └── api.py
-├── scripts/                    # Helper scripts
-│   ├── setup_rocm.sh
-│   ├── benchmark.sh
-│   └── upload_to_hf.sh
-├── notebooks/                  # Jupyter notebooks
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_training_analysis.ipynb
-│   └── 03_benchmark_results.ipynb
-├── benchmarks/                 # Benchmark results & scripts
-│   ├── rocm_vs_cuda.md
-│   ├── throughput_tests.py
-│   └── results/
-├── data/                       # Dataset configs & samples
-│   ├── datasets.md
-│   └── samples/
-├── models/                     # Model artifacts (gitignored)
-├── results/                    # Training outputs
-└── docs/                       # Documentation
-    ├── setup_guide.md
-    ├── rocm_porting_notes.md
-    └── api_docs.md
+│   ├── indo-llm/
+│   │   ├── train.py              # Fine-tuning script
+│   │   └── prepare_data.py       # Dataset preparation
+│   └── vision-pipeline/
+│       └── pipeline.py           # Document extraction
+├── scripts/
+│   └── setup_rocm.sh             # Environment setup
+├── benchmarks/
+│   └── throughput_tests.py       # GPU benchmarks
+└── docs/
+    └── rocm_porting_notes.md     # CUDA → ROCm guide
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# 1. Setup ROCm environment
+# Setup ROCm environment
 bash scripts/setup_rocm.sh
 
-# 2. Prepare Indonesian dataset
+# Prepare Indonesian dataset
 python src/indo-llm/prepare_data.py --dataset indonlp/NusaTranslation
 
-# 3. Fine-tune Llama 3 with LoRA
+# Fine-tune Llama 3 with LoRA
 python src/indo-llm/train.py --config configs/lora_config.yaml
 
-# 4. Run inference benchmark
+# Run inference benchmark
 python benchmarks/throughput_tests.py --model ./models/indo-llama3-lora
 
-# 5. Test vision pipeline
+# Test vision pipeline
 python src/vision-pipeline/pipeline.py --image data/samples/ktp_sample.jpg
 ```
 
-## 📈 Expected Deliverables
+## Deliverables
 
 | # | Deliverable | Type |
 |---|-------------|------|
@@ -141,15 +116,19 @@ python src/vision-pipeline/pipeline.py --image data/samples/ktp_sample.jpg
 | 3 | Document extraction pipeline | Python Package |
 | 4 | KTP/Invoice extraction demo | API + Notebook |
 | 5 | ROCm porting guide for NLP | Tutorial |
-| 6 | AMD Developer Cloud usage report | Blog Post |
 
-## 📄 License
+## Datasets
 
-MIT License - See [LICENSE](LICENSE)
+- [NusaTranslation](https://huggingface.co/datasets/indonlp/NusaTranslation) — Parallel translation
+- [NusaX](https://huggingface.co/datasets/indonlp/NusaX) — Sentiment analysis
+- [NusaParagraph](https://huggingface.co/datasets/indonlp/NusaParagraph) — Text generation
 
-## 🙏 Acknowledgments
+## License
 
-- AMD Developer Program for cloud GPU credits
+MIT — See [LICENSE](LICENSE)
+
+## Acknowledgments
+
 - Indonesian NLP community (IndoNLP, NusaCrowd, NusaTranslation)
 - Hugging Face for model hosting & tools
 - ROCm open-source community
